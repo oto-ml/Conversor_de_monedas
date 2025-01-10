@@ -48,11 +48,15 @@ public class Main {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
+        // Analizar y mostrar diferentes elementos de la respuesta HTTP
+        System.out.println("Status Code: " + response.statusCode());
+        System.out.println("Headers: " + response.headers());
+        System.out.println("Body: " + response.body());
+
         if (response.statusCode() != 200) {
             throw new RuntimeException("HTTP response code: " + response.statusCode());
         }
 
         return response.body();
-    }
     }
 }
