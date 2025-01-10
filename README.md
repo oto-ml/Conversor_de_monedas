@@ -1,3 +1,5 @@
+![Banner](Encriptador.jpg)
+
 # Conversor de Monedas
 
 This is a Java-based project that converts currency using the Exchange Rate API. It also utilizes the Gson library to convert API results to JSON. This is part of Oracle Next Education Challenge by Alura
