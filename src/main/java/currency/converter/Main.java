@@ -1,62 +1,59 @@
 package currency.converter;
 
-import java.net.http.HttpRequest;
-import java.net.http.HttpClient;
-import java.net.http.HttpResponse;
-import java.net.URI;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
 
-    // URL base de la API de ExchangeRate
-    private static final String BASE_URL = "https://api.exchangerate-api.com/v4/latest/";
-
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        currencyService service = new currencyService();
+        JsonGenerator generator = new JsonGenerator();
+        List<JsonGenerator.Conversion> conversiones = new ArrayList<>();
 
-        System.out.print("Ingrese la moneda base (por ejemplo, USD): ");
-        String baseCurrency = scanner.nextLine().toUpperCase();
+        System.out.println("Bienvenido al conversor de monedas.");
 
-        System.out.print("Ingrese la moneda a convertir (por ejemplo, EUR): ");
-        String targetCurrency = scanner.nextLine().toUpperCase();
+        while (true) {
+            System.out.print("Ingrese la moneda origen (USD, EUR, MXN, COP, BRL, PEN): ");
+            String monedaOrigen = scanner.nextLine().toUpperCase();
 
-        System.out.print("Ingrese la cantidad a convertir: ");
-        double amount = scanner.nextDouble();
+            System.out.print("Ingrese la moneda destino (USD, EUR, MXN, COP, BRL, PEN): ");
+            String monedaDestino = scanner.nextLine().toUpperCase();
 
-        try {
-            String jsonResponse = get(BASE_URL + baseCurrency);
-            JsonObject jsonObject = JsonParser.parseString(jsonResponse).getAsJsonObject();
-            double exchangeRate = jsonObject.getAsJsonObject("rates").get(targetCurrency).getAsDouble();
-            double convertedAmount = amount * exchangeRate;
-            System.out.printf("%.2f %s son equivalentes a %.2f %s\n", amount, baseCurrency, convertedAmount, targetCurrency);
-        } catch (Exception e) {
-            System.out.println("Error al obtener la tasa de cambio: " + e.getMessage());
+            System.out.print("Ingrese la cantidad a convertir: ");
+            double cantidadOrigen = scanner.nextDouble();
+            scanner.nextLine(); // Limpiar el buffer del scanner
+
+            try {
+                // Lógica de conversión
+                double cantidadDestino = service.convertirMoneda(monedaOrigen, monedaDestino, cantidadOrigen);
+
+                // Crear un objeto Conversion para la conversión actual
+                JsonGenerator.Conversion conversion = new JsonGenerator.Conversion(monedaOrigen, monedaDestino, cantidadOrigen, cantidadDestino);
+
+                // Agregar el objeto Conversion a la lista
+                conversiones.add(conversion);
+
+            } catch (Exception e) {
+                System.out.println("Ocurrió un error: " + e.getMessage());
+            }
+
+            System.out.print("¿Deseas hacer otra conversión? (s/n): ");
+            String respuesta = scanner.nextLine().toLowerCase();
+
+            if (respuesta.equals("n")) {
+                // Generar y guardar el archivo JSON con todas las conversiones
+                try {
+                    String jsonFinal = generator.generarJsonLista(conversiones);  // Generar el JSON para todas las conversiones
+                    generator.guardarJsonEnArchivo(jsonFinal, "conversiones_totales.json");  // Guardar el archivo JSON
+                    System.out.println("Las conversiones se han guardado en el archivo conversiones_totales.json");
+                } catch (Exception e) {
+                    System.out.println("Ocurrió un error al guardar el archivo: " + e.getMessage());
+                }
+                break;
+            }
         }
-
-        scanner.close();
-    }
-
-    private static String get(String urlStr) throws Exception {
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(urlStr))
-                .header("Accept", "application/json")
-                .GET()
-                .build();
-
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        // Analizar y mostrar diferentes elementos de la respuesta HTTP
-        System.out.println("Status Code: " + response.statusCode());
-        System.out.println("Headers: " + response.headers());
-        System.out.println("Body: " + response.body());
-
-        if (response.statusCode() != 200) {
-            throw new RuntimeException("HTTP response code: " + response.statusCode());
-        }
-
-        return response.body();
     }
 }
